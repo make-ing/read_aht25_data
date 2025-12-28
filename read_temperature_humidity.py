@@ -1,5 +1,7 @@
+import os
 from time import sleep
-
+from dotenv import load_dotenv
+from Adafruit_IO import Client, Data
 from smbus2 import SMBus, i2c_msg
 
 def get_measurement():
@@ -28,11 +30,18 @@ def get_measurement():
 
 
 if __name__ == "__main__":
+    load_dotenv()
+
     humidity_sum, temperature_sum = 0, 0
     for _ in range(10):
         humidity, temperature = get_measurement()
         humidity_sum += humidity
         temperature_sum += temperature
         sleep(0.1)
-    print(f"Humidity: {humidity_sum / 10:.1f} %")
-    print(f"Temperature: {temperature_sum / 10:.1f} °C")
+    humidity, temperature = humidity_sum / 10, temperature_sum / 10
+
+    username = os.getenv("ADAFRUIT_IO_USERNAME")
+    key = os.getenv("ADAFRUIT_IO_KEY")
+    aio = Client(username, key)
+    aio.create_data('humidity', Data(value=humidity))
+    aio.create_data('temperature', Data(value=temperature))
